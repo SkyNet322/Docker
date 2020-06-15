@@ -1,0 +1,68 @@
+version: '3.7'
+
+services:
+
+  #PHP Service
+  app:
+    build: ./docker/php-fpm
+    container_name: app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    ports:  # todo: Для чего прокинуты порты?
+      - 6001:6001
+      - 9001:9001
+    volumes:
+      - ./:/var/www
+      - ./docker/php-fpm/local.ini:/usr/local/etc/php/conf.d/local.ini
+      - ./docker/php-fpm/certs:/usr/local/share/ca-certificates
+      - ./storage/logs/supervisor:/var/log/supervisor
+    networks:
+      - mgnt_mrm_errands-network
+
+  #PostgreSQL
+  db:
+    image: postgres:12
+    container_name: db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+      - ./docker/db:/docker-entrypoint-initdb.d
+    networks:
+      - mgnt_mrm_errands-network
+
+  #Nginx Service
+  web:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+      - ./docker/nginx/ssl/:/etc/ssl/
+      - ./:/var/www/
+      - ./storage/logs/nginx:/var/log/nginx/
+    ports:
+      - "88:80"
+      - "8443:443"
+    networks:
+      - mgnt_mrm_errands-network
+
+#Docker Networks
+networks:
+  mgnt_mrm_errands-network:
+    driver: bridge
+
+#Volumes
+volumes:
+  dbdata:
+    driver: local
