@@ -18,10 +18,6 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/php-fpm/local.ini:/usr/local/etc/php/conf.d/local.ini
-      - ./docker/php-fpm/certs:/usr/local/share/ca-certificates
-      - ./storage/logs/supervisor:/var/log/supervisor
-    networks:
-      - mgnt_mrm_errands-network
 
   #PostgreSQL
   db:
@@ -34,11 +30,6 @@ services:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - dbdata:/var/lib/postgresql/data
-      - ./docker/db:/docker-entrypoint-initdb.d
-    networks:
-      - mgnt_mrm_errands-network
 
   #Nginx Service
   web:
@@ -48,21 +39,8 @@ services:
     tty: true
     volumes:
       - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
-      - ./docker/nginx/ssl/:/etc/ssl/
       - ./:/var/www/
       - ./storage/logs/nginx:/var/log/nginx/
     ports:
       - "88:80"
       - "8443:443"
-    networks:
-      - mgnt_mrm_errands-network
-
-#Docker Networks
-networks:
-  mgnt_mrm_errands-network:
-    driver: bridge
-
-#Volumes
-volumes:
-  dbdata:
-    driver: local
